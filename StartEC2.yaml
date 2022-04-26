@@ -1,0 +1,111 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This CF used to setup Start EC2 instances.
+Resources:
+  ScheduledRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: "Going to trigger the lambda function on given time interval"
+        ScheduleExpression: "cron(00 18 ? * FRI *)"
+        Name: "StartEC2InstanceAutoStartRule"
+        State: "ENABLED"
+        Targets:
+          -
+            Arn:
+              Fn::GetAtt:
+                - "StartEC2InstanceAutoStart"
+                - "Arn"
+            Id: "ScheduledRule"
+  PermissionForEventsToInvokeLambda:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !Ref "StartEC2InstanceAutoStart"
+        Action: "lambda:InvokeFunction"
+        Principal: "events.amazonaws.com"
+        SourceArn:
+          Fn::GetAtt:
+            - "ScheduledRule"
+            - "Arn"
+  StartEC2InstanceAutoStart: #Lambda Function
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+            import boto3
+            import logging
+
+            #setup simple logging for INFO
+            logger = logging.getLogger()
+            logger.setLevel(logging.INFO)
+
+            #define the connection
+            ec2 = boto3.resource('ec2')
+            def lambda_handler(event, context):
+                # Use the filter() method of the instances collection to retrieve
+                # all running EC2 instances.
+                filters = [{
+            #These tags-name need to mentioned on ec2 tags. Change accordingly
+                        'Name': 'tag:AutoStart',
+            #These tags-value need to mentioned on ec2 tags. Change accordingly
+                        'Values': ['Yes']
+                    },
+                    {
+                        'Name': 'instance-state-name',
+                        'Values': ['stopped']
+                    }
+                ]
+                #filter the instances
+                instances = ec2.instances.filter(Filters=filters)
+                #locate all stopped instances
+                startInstances = [instance.id for instance in instances]
+                #print the instances for logging purposes
+                print (startInstances)
+                #make sure there are actually instances to Start up.
+
+                if len(startInstances) > 0:
+                    #perform the start
+                    startingUp = ec2.instances.filter(InstanceIds=startInstances).start()
+                    print ("startingUp")
+                else:
+                    print ("Nothing to see here")
+  ###########################################################################
+      Handler: index.lambda_handler
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: '300'
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+            - arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action: "*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+            - ec2:*
+            Resource: "*"
