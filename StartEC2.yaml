@@ -6,7 +6,7 @@ Resources:
       Type: AWS::Events::Rule
       Properties:
         Description: "Going to trigger the lambda function on given time interval"
-        ScheduleExpression: "cron(00 18 ? * FRI *)"
+        ScheduleExpression: "cron(30 2 ? * MON *)"
         Name: "StartEC2InstanceAutoStartRule"
         State: "ENABLED"
         Targets:
