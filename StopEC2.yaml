@@ -75,6 +75,9 @@ Resources:
         - LambdaExecutionRole
         - Arn
       Runtime: python3.9
+      Tags:
+        - Key: "Env"
+          Value: "Internal"
       MemorySize: 128
       Timeout: '300'
   LambdaExecutionRole:
