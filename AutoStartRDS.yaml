@@ -3,18 +3,18 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: This CF used to setup Start RDS instances.
 Parameters:
   Region:
-    Description:
+    Description: Need to choose the region where your RDS there.
     Type: String
     Default: us-east-1
     AllowedValues:
-        - us-east-1
-        - us-east-2
-        - us-west-1
-        - us-west-2
-        - ap-south-1
-        - ap-southeast-1
-        - ap-southeast-2
-        - eu-west-1
+    - us-east-1
+    - us-east-2
+    - us-west-1
+    - us-west-2
+    - ap-south-1
+    - ap-southeast-1
+    - ap-southeast-2
+    - eu-west-1
 Resources:
   ScheduledRule:
       Type: AWS::Events::Rule
