@@ -20,7 +20,7 @@ Resources:
       Type: AWS::Events::Rule
       Properties:
         Description: "Going to trigger the lambda function on given time interval"
-        ScheduleExpression: "cron(00 18 ? * FRI *)"
+        ScheduleExpression: "cron(15 18 ? * FRI *)"
         Name: "StopRDSInstanceAutoStopRule"
         State: "ENABLED"
         Targets:
